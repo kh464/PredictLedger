@@ -1,0 +1,55 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS "User" (
+  "id" INTEGER NOT NULL PRIMARY KEY,
+  "username" TEXT NOT NULL UNIQUE,
+  "balance" INTEGER NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "Bet" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "userId" INTEGER NOT NULL,
+  "gameId" TEXT NOT NULL,
+  "amount" INTEGER NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'PLACED',
+  "result" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Bet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Ledger" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "userId" INTEGER NOT NULL,
+  "betId" INTEGER,
+  "type" TEXT NOT NULL,
+  "amount" INTEGER NOT NULL,
+  "refType" TEXT NOT NULL,
+  "refId" TEXT NOT NULL,
+  "idempotencyKey" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Ledger_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT "Ledger_betId_fkey" FOREIGN KEY ("betId") REFERENCES "Bet" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "IdempotencyRecord" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "scope" TEXT NOT NULL,
+  "key" TEXT NOT NULL,
+  "requestHash" TEXT NOT NULL,
+  "responseStatus" INTEGER NOT NULL,
+  "responseBody" TEXT NOT NULL,
+  "resourceType" TEXT,
+  "resourceId" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "Bet_userId_idx" ON "Bet"("userId");
+CREATE INDEX IF NOT EXISTS "Bet_status_idx" ON "Bet"("status");
+CREATE INDEX IF NOT EXISTS "Ledger_userId_idx" ON "Ledger"("userId");
+CREATE INDEX IF NOT EXISTS "Ledger_betId_idx" ON "Ledger"("betId");
+CREATE INDEX IF NOT EXISTS "Ledger_type_idx" ON "Ledger"("type");
+CREATE INDEX IF NOT EXISTS "Ledger_refType_refId_idx" ON "Ledger"("refType", "refId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IdempotencyRecord_scope_key_key" ON "IdempotencyRecord"("scope", "key");

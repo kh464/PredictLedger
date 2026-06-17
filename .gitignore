@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+coverage/
+*.tsbuildinfo
+frontend/dist/
+frontend/*.js
+frontend/*.d.ts
+frontend/*.tsbuildinfo
+docs/
